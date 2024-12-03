@@ -11,6 +11,7 @@ Last Update: 22/03/2021
 import sys, os, getopt, re
 from functools import wraps
 from glob import glob
+import pickle
 
 
 def hamming(s,t):
@@ -190,7 +191,7 @@ def main(argv):
             continue
         lines = [line.strip() for line in open(path + lang + ".trn", "r", encoding='utf8') if line != '\n']
         
-        if not os.path.exists("preffsuffbias"):
+        if not os.path.exists("prefsuffbias"):
         # First, test if language is predominantly suffixing or prefixing
         # If prefixing, work with reversed strings
             prefbias, suffbias = 0,0
@@ -202,36 +203,45 @@ def main(argv):
                     suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
 
             with open("prefsuffbias","w") as writer:
-                writer.writelines([str(prefbias),str(suffbias)])
+                writer.writelines([str(prefbias)+"\n",str(suffbias)+"\n"])
         else:
             with open("prefsuffbias","r") as reader:
                 prefbias = int(reader.readline())
                 suffbias = int(reader.readline())
-            
-        for l in lines: # Read in lines and extract transformation rules from pairs
-            print(l)
-            lemma, msd, form = l.split(u'\t')
-            if prefbias > suffbias:
-                lemma = lemma[::-1]
-                form = form[::-1]
-            prules, srules = prefix_suffix_rules_get(lemma, form)
+        if not os.path.exists("prules.json") or not os.path.exists("srules.json"):
+            for l in lines: # Read in lines and extract transformation rules from pairs
+                print(l)
+                lemma, msd, form = l.split(u'\t')
+                if prefbias > suffbias:
+                    lemma = lemma[::-1]
+                    form = form[::-1]
+                prules, srules = prefix_suffix_rules_get(lemma, form)
 
-            if msd not in allprules and len(prules) > 0:
-                allprules[msd] = {}
-            if msd not in allsrules and len(srules) > 0:
-                allsrules[msd] = {}
+                if msd not in allprules and len(prules) > 0:
+                    allprules[msd] = {}
+                if msd not in allsrules and len(srules) > 0:
+                    allsrules[msd] = {}
 
-            for r in prules:
-                if (r[0],r[1]) in allprules[msd]:
-                    allprules[msd][(r[0],r[1])] = allprules[msd][(r[0],r[1])] + 1
-                else:
-                    allprules[msd][(r[0],r[1])] = 1
+                for r in prules:
+                    if (r[0],r[1]) in allprules[msd]:
+                        allprules[msd][(r[0],r[1])] = allprules[msd][(r[0],r[1])] + 1
+                    else:
+                        allprules[msd][(r[0],r[1])] = 1
 
-            for r in srules:
-                if (r[0],r[1]) in allsrules[msd]:
-                    allsrules[msd][(r[0],r[1])] = allsrules[msd][(r[0],r[1])] + 1
-                else:
-                    allsrules[msd][(r[0],r[1])] = 1
+                for r in srules:
+                    if (r[0],r[1]) in allsrules[msd]:
+                        allsrules[msd][(r[0],r[1])] = allsrules[msd][(r[0],r[1])] + 1
+                    else:
+                        allsrules[msd][(r[0],r[1])] = 1
+            with open("prules.json","wb") as pwriter:
+                pickle.dump(allprules,pwriter)
+            with open("srules.json","wb") as swriter:
+                pickle.dump(allsrules,swriter)
+        else:
+            with open("prules.json","rb") as preader:
+                allprules = pickle.load(preader)
+            with open("srules.json","rb") as sreader:
+                allsrules = pickle.load(sreader)
 
         # Run eval on dev
         devlines = [line.strip() for line in open(path + lang + ".dev", "r", encoding='utf8') if line != '\n']
