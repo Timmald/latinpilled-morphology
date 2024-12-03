@@ -11,6 +11,7 @@ Last Update: 22/03/2021
 import sys, os, getopt, re
 from functools import wraps
 from glob import glob
+import pickle
 
 
 def hamming(s,t):
@@ -161,7 +162,7 @@ def numtrailingsyms(s, symbol):
 
 def main(argv):
     options, remainder = getopt.gnu_getopt(argv[1:], 'ohp:', ['output','help','path='])
-    TEST, OUTPUT, HELP, path = False,False, False, '../data/'
+    TEST, OUTPUT, HELP, path = False,False, False, './Latin_stuff/'
     for opt, arg in options:
         if opt in ('-o', '--output'):
             OUTPUT = True
@@ -189,39 +190,58 @@ def main(argv):
         if not os.path.isfile(path + lang +  ".trn"):
             continue
         lines = [line.strip() for line in open(path + lang + ".trn", "r", encoding='utf8') if line != '\n']
-
+        
+        if not os.path.exists("prefsuffbias"):
         # First, test if language is predominantly suffixing or prefixing
         # If prefixing, work with reversed strings
-        prefbias, suffbias = 0,0
-        for l in lines:
-            lemma, _, form = l.split(u'\t')
-            aligned = halign(lemma, form)
-            if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
-                prefbias += numleadingsyms(aligned[0],'_') + numleadingsyms(aligned[1],'_')
-                suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
-        for l in lines: # Read in lines and extract transformation rules from pairs
-            lemma, msd, form = l.split(u'\t')
-            if prefbias > suffbias:
-                lemma = lemma[::-1]
-                form = form[::-1]
-            prules, srules = prefix_suffix_rules_get(lemma, form)
+            prefbias, suffbias = 0,0
+            for l in lines:
+                lemma, _, form = l.split(u'\t')
+                aligned = halign(lemma, form)
+                if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
+                    prefbias += numleadingsyms(aligned[0],'_') + numleadingsyms(aligned[1],'_')
+                    suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
 
-            if msd not in allprules and len(prules) > 0:
-                allprules[msd] = {}
-            if msd not in allsrules and len(srules) > 0:
-                allsrules[msd] = {}
+            with open("prefsuffbias","w") as writer:
+                writer.writelines([str(prefbias)+"\n",str(suffbias)+"\n"])
+        else:
+            with open("prefsuffbias","r") as reader:
+                prefbias = int(reader.readline())
+                suffbias = int(reader.readline())
+        if not os.path.exists("prules.json") or not os.path.exists("srules.json"):
+            for l in lines: # Read in lines and extract transformation rules from pairs
+                print(l)
+                lemma, msd, form = l.split(u'\t')
+                if prefbias > suffbias:
+                    lemma = lemma[::-1]
+                    form = form[::-1]
+                prules, srules = prefix_suffix_rules_get(lemma, form)
 
-            for r in prules:
-                if (r[0],r[1]) in allprules[msd]:
-                    allprules[msd][(r[0],r[1])] = allprules[msd][(r[0],r[1])] + 1
-                else:
-                    allprules[msd][(r[0],r[1])] = 1
+                if msd not in allprules and len(prules) > 0:
+                    allprules[msd] = {}
+                if msd not in allsrules and len(srules) > 0:
+                    allsrules[msd] = {}
 
-            for r in srules:
-                if (r[0],r[1]) in allsrules[msd]:
-                    allsrules[msd][(r[0],r[1])] = allsrules[msd][(r[0],r[1])] + 1
-                else:
-                    allsrules[msd][(r[0],r[1])] = 1
+                for r in prules:
+                    if (r[0],r[1]) in allprules[msd]:
+                        allprules[msd][(r[0],r[1])] = allprules[msd][(r[0],r[1])] + 1
+                    else:
+                        allprules[msd][(r[0],r[1])] = 1
+
+                for r in srules:
+                    if (r[0],r[1]) in allsrules[msd]:
+                        allsrules[msd][(r[0],r[1])] = allsrules[msd][(r[0],r[1])] + 1
+                    else:
+                        allsrules[msd][(r[0],r[1])] = 1
+            with open("prules.json","wb") as pwriter:
+                pickle.dump(allprules,pwriter)
+            with open("srules.json","wb") as swriter:
+                pickle.dump(allsrules,swriter)
+        else:
+            with open("prules.json","rb") as preader:
+                allprules = pickle.load(preader)
+            with open("srules.json","rb") as sreader:
+                allsrules = pickle.load(sreader)
 
         # Run eval on dev
         devlines = [line.strip() for line in open(path + lang + ".dev", "r", encoding='utf8') if line != '\n']
