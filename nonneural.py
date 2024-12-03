@@ -161,7 +161,7 @@ def numtrailingsyms(s, symbol):
 
 def main(argv):
     options, remainder = getopt.gnu_getopt(argv[1:], 'ohp:', ['output','help','path='])
-    TEST, OUTPUT, HELP, path = False,False, False, '../data/'
+    TEST, OUTPUT, HELP, path = False,False, False, './Latin_stuff/'
     for opt, arg in options:
         if opt in ('-o', '--output'):
             OUTPUT = True
@@ -189,17 +189,27 @@ def main(argv):
         if not os.path.isfile(path + lang +  ".trn"):
             continue
         lines = [line.strip() for line in open(path + lang + ".trn", "r", encoding='utf8') if line != '\n']
-
+        
+        if not os.path.exists("preffsuffbias"):
         # First, test if language is predominantly suffixing or prefixing
         # If prefixing, work with reversed strings
-        prefbias, suffbias = 0,0
-        for l in lines:
-            lemma, _, form = l.split(u'\t')
-            aligned = halign(lemma, form)
-            if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
-                prefbias += numleadingsyms(aligned[0],'_') + numleadingsyms(aligned[1],'_')
-                suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
+            prefbias, suffbias = 0,0
+            for l in lines:
+                lemma, _, form = l.split(u'\t')
+                aligned = halign(lemma, form)
+                if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
+                    prefbias += numleadingsyms(aligned[0],'_') + numleadingsyms(aligned[1],'_')
+                    suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
+
+            with open("prefsuffbias","w") as writer:
+                writer.writelines([str(prefbias),str(suffbias)])
+        else:
+            with open("prefsuffbias","r") as reader:
+                prefbias = int(reader.readline())
+                suffbias = int(reader.readline())
+            
         for l in lines: # Read in lines and extract transformation rules from pairs
+            print(l)
             lemma, msd, form = l.split(u'\t')
             if prefbias > suffbias:
                 lemma = lemma[::-1]
