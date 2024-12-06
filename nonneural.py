@@ -12,7 +12,7 @@ import sys, os, getopt, re
 from functools import wraps
 from glob import glob
 import pickle
-
+import tqdm
 
 def hamming(s,t):
     return sum(1 for x,y in zip(s,t) if x != y)
@@ -192,10 +192,11 @@ def main(argv):
         lines = [line.strip() for line in open(path + lang + ".trn", "r", encoding='utf8') if line != '\n']
         
         if not os.path.exists("prefsuffbias"):
+            print("CHECKING PREFIX BIAS")
         # First, test if language is predominantly suffixing or prefixing
         # If prefixing, work with reversed strings
             prefbias, suffbias = 0,0
-            for l in lines:
+            for l in tqdm.tqdm(lines):
                 lemma, _, form = l.split(u'\t')
                 aligned = halign(lemma, form)
                 if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
@@ -209,8 +210,8 @@ def main(argv):
                 prefbias = int(reader.readline())
                 suffbias = int(reader.readline())
         if not os.path.exists("prules.json") or not os.path.exists("srules.json"):
-            for l in lines: # Read in lines and extract transformation rules from pairs
-                print(l)
+            print("FINDING RULES")
+            for l in tqdm.tqdm(lines): # Read in lines and extract transformation rules from pairs
                 lemma, msd, form = l.split(u'\t')
                 if prefbias > suffbias:
                     lemma = lemma[::-1]
@@ -244,6 +245,7 @@ def main(argv):
                 allsrules = pickle.load(sreader)
 
         # Run eval on dev
+        print("RUNNING EVAL ON DEV")
         devlines = [line.strip() for line in open(path + lang + ".dev", "r", encoding='utf8') if line != '\n']
         if TEST:
             devlines = [line.strip() for line in open(path + lang + ".tst", "r", encoding='utf8') if line != '\n']
@@ -251,7 +253,7 @@ def main(argv):
         numguesses = 0
         if OUTPUT:
             outfile = open(path + lang + ".out", "w", encoding='utf8')
-        for l in devlines:
+        for l in tqdm.tqdm(devlines):
             lemma, msd, correct = l.split(u'\t')
 #                    lemma, msd, = l.split(u'\t')
             if prefbias > suffbias:
