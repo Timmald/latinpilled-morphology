@@ -14,6 +14,7 @@ from glob import glob
 import pickle
 import tqdm
 
+
 def hamming(s,t):
     return sum(1 for x,y in zip(s,t) if x != y)
 
