@@ -19,7 +19,7 @@ y = lat[['Infected']]
 
 lat['PartoSpeech'] = lat['Infection'].str.extract(r'(N|PROPN|V|V.PTCP|ADJ);')
 uniqueLemmas = lat.drop_duplicates(subset = ['Lemon'])
-uLemonlen = len(uniqueLemmas)/50
+uLemonlen = len(uniqueLemmas)/90
 vnum = int(uLemonlen*0.06690776468800437)
 vpnum = int(uLemonlen*0.4402412287420541)
 adjnum = int(uLemonlen*0.23140998224240768)
