@@ -181,100 +181,100 @@ def main(argv):
             print("Options:")
             print(" -o         create output files with guesses (and don't just evaluate)")
             print(" -t         evaluate on test instead of dev")
-            print(" -p [path]  data files path. Default is ../data/")
+            print(" -p [path]  data files path. Default is ./Latin_stuff")
             quit()
 
     totalavg, numlang = 0.0, 0
-    for lang in [os.path.splitext(d)[0] for d in os.listdir(path) if '.trn' in d]:
-        allprules, allsrules = {}, {}
-        if not os.path.isfile(path + lang +  ".trn"):
-            continue
-        lines = [line.strip() for line in open(path + lang + ".trn", "r", encoding='utf8') if line != '\n']
-        
-        if not os.path.exists("prefsuffbias"):
-            print("CHECKING PREFIX BIAS")
-        # First, test if language is predominantly suffixing or prefixing
-        # If prefixing, work with reversed strings
-            prefbias, suffbias = 0,0
-            for l in tqdm.tqdm(lines):
-                lemma, _, form = l.split(u'\t')
-                aligned = halign(lemma, form)
-                if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
-                    prefbias += numleadingsyms(aligned[0],'_') + numleadingsyms(aligned[1],'_')
-                    suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
+    allprules, allsrules = {}, {}
+    lang="lat"
+    if not os.path.isfile(path + lang +  ".trn"):
+        exit(0)
+    lines = [line.strip() for line in open(path + lang + ".trn", "r", encoding='utf8') if line != '\n']
+    
+    if not os.path.exists("prefsuffbias"):
+        print("CHECKING PREFIX BIAS")
+    # First, test if language is predominantly suffixing or prefixing
+    # If prefixing, work with reversed strings
+        prefbias, suffbias = 0,0
+        for l in tqdm.tqdm(lines):
+            lemma, _, form = l.split(u'\t')
+            aligned = halign(lemma, form)
+            if ' ' not in aligned[0] and ' ' not in aligned[1] and '-' not in aligned[0] and '-' not in aligned[1]:
+                prefbias += numleadingsyms(aligned[0],'_') + numleadingsyms(aligned[1],'_')
+                suffbias += numtrailingsyms(aligned[0],'_') + numtrailingsyms(aligned[1],'_')
 
-            with open("prefsuffbias","w") as writer:
-                writer.writelines([str(prefbias)+"\n",str(suffbias)+"\n"])
-        else:
-            with open("prefsuffbias","r") as reader:
-                prefbias = int(reader.readline())
-                suffbias = int(reader.readline())
-        if not os.path.exists("prules.json") or not os.path.exists("srules.json"):
-            print("FINDING RULES")
-            for l in tqdm.tqdm(lines): # Read in lines and extract transformation rules from pairs
-                lemma, msd, form = l.split(u'\t')
-                if prefbias > suffbias:
-                    lemma = lemma[::-1]
-                    form = form[::-1]
-                prules, srules = prefix_suffix_rules_get(lemma, form)
+        with open("prefsuffbias","w") as writer:
+            writer.writelines([str(prefbias)+"\n",str(suffbias)+"\n"])
+    else:
+        with open("prefsuffbias","r") as reader:
+            prefbias = int(reader.readline())
+            suffbias = int(reader.readline())
+    if not os.path.exists("prules.json") or not os.path.exists("srules.json"):
+        print("FINDING RULES")
+        for l in tqdm.tqdm(lines): # Read in lines and extract transformation rules from pairs
+            lemma, msd, form = l.split(u'\t')
+            if prefbias > suffbias:
+                lemma = lemma[::-1]
+                form = form[::-1]
+            prules, srules = prefix_suffix_rules_get(lemma, form)
 
-                if msd not in allprules and len(prules) > 0:
-                    allprules[msd] = {}
-                if msd not in allsrules and len(srules) > 0:
-                    allsrules[msd] = {}
+            if msd not in allprules and len(prules) > 0:
+                allprules[msd] = {}
+            if msd not in allsrules and len(srules) > 0:
+                allsrules[msd] = {}
 
-                for r in prules:
-                    if (r[0],r[1]) in allprules[msd]:
-                        allprules[msd][(r[0],r[1])] = allprules[msd][(r[0],r[1])] + 1
-                    else:
-                        allprules[msd][(r[0],r[1])] = 1
+            for r in prules:
+                if (r[0],r[1]) in allprules[msd]:
+                    allprules[msd][(r[0],r[1])] = allprules[msd][(r[0],r[1])] + 1
+                else:
+                    allprules[msd][(r[0],r[1])] = 1
 
-                for r in srules:
-                    if (r[0],r[1]) in allsrules[msd]:
-                        allsrules[msd][(r[0],r[1])] = allsrules[msd][(r[0],r[1])] + 1
-                    else:
-                        allsrules[msd][(r[0],r[1])] = 1
-            with open("prules.json","wb") as pwriter:
-                pickle.dump(allprules,pwriter)
-            with open("srules.json","wb") as swriter:
-                pickle.dump(allsrules,swriter)
-        else:
-            with open("prules.json","rb") as preader:
-                allprules = pickle.load(preader)
-            with open("srules.json","rb") as sreader:
-                allsrules = pickle.load(sreader)
+            for r in srules:
+                if (r[0],r[1]) in allsrules[msd]:
+                    allsrules[msd][(r[0],r[1])] = allsrules[msd][(r[0],r[1])] + 1
+                else:
+                    allsrules[msd][(r[0],r[1])] = 1
+        with open("prules.json","wb") as pwriter:
+            pickle.dump(allprules,pwriter)
+        with open("srules.json","wb") as swriter:
+            pickle.dump(allsrules,swriter)
+    else:
+        with open("prules.json","rb") as preader:
+            allprules = pickle.load(preader)
+        with open("srules.json","rb") as sreader:
+            allsrules = pickle.load(sreader)
 
-        # Run eval on dev
-        print("RUNNING EVAL ON DEV")
-        devlines = [line.strip() for line in open(path + lang + ".dev", "r", encoding='utf8') if line != '\n']
-        if TEST:
-            devlines = [line.strip() for line in open(path + lang + ".tst", "r", encoding='utf8') if line != '\n']
-        numcorrect = 0
-        numguesses = 0
-        if OUTPUT:
-            outfile = open(path + lang + ".out", "w", encoding='utf8')
-        for l in tqdm.tqdm(devlines):
-            lemma, msd, correct = l.split(u'\t')
+    # Run eval on dev
+    print("RUNNING EVAL ON DEV")
+    devlines = [line.strip() for line in open(path + lang + ".dev", "r", encoding='utf8') if line != '\n']
+    if TEST:
+        devlines = [line.strip() for line in open(path + lang + ".tst", "r", encoding='utf8') if line != '\n']
+    numcorrect = 0
+    numguesses = 0
+    if OUTPUT:
+        outfile = open(path + lang + ".out", "w", encoding='utf8')
+    for l in tqdm.tqdm(devlines):
+        lemma, msd, correct = l.split(u'\t')
 #                    lemma, msd, = l.split(u'\t')
-            if prefbias > suffbias:
-                lemma = lemma[::-1]
-            outform = apply_best_rule(lemma, msd, allprules, allsrules)
-            if prefbias > suffbias:
-                outform = outform[::-1]
-                lemma = lemma[::-1]
-            if outform == correct:
-                numcorrect += 1
-            numguesses += 1
-            if OUTPUT:
-                outfile.write(lemma + "\t" + msd + "\t" + outform + "\n")
-
+        if prefbias > suffbias:
+            lemma = lemma[::-1]
+        outform = apply_best_rule(lemma, msd, allprules, allsrules)
+        if prefbias > suffbias:
+            outform = outform[::-1]
+            lemma = lemma[::-1]
+        if outform == correct:
+            numcorrect += 1
+        numguesses += 1
         if OUTPUT:
-            outfile.close()
+            outfile.write(lemma + "\t" + msd + "\t" + outform + "\n")
 
-        numlang += 1
-        totalavg += numcorrect/float(numguesses)
+    if OUTPUT:
+        outfile.close()
 
-        print(lang + ": " + str(str(numcorrect/float(numguesses)))[0:7])
+    numlang += 1
+    totalavg += numcorrect/float(numguesses)
+
+    print(lang + ": " + str(str(numcorrect/float(numguesses)))[0:7])
 
     print("Average accuracy", totalavg/float(numlang))
 
