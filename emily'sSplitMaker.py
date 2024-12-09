@@ -3,7 +3,7 @@ import pandas as pd
 
 # Put it into a dataframe
 lines = []
-with open('Latin_stuff/lat.txt', encoding="utf8") as f:
+with open('Latin_stuff/lat', encoding="utf8") as f:
     lines = [line for line in f]
 lat = pd.read_table("Latin_stuff/lat.txt", sep='\t', names=['Lemon', 'Infected', 'Infection'], skiprows=lambda x: '+' in lines[x])
 # I replaced all spaces with hyphens because those entries were messing with read_table
