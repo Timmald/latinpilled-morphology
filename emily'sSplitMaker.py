@@ -34,24 +34,23 @@ pLemon = uniqueLemmas[uniqueLemmas['PartoSpeech'] == 'PROPN'].sample(pnum)
 
 
 splitLemons = pd.concat([vLemon,vpLemon,adjLemon,nLemon,pLemon])
-def getlist(lemons):
+def getList(lemons):
     splitslist = []
     for lemon in lemons['Lemon']:
         for row in lat[lat['Lemon'] == lemon].to_numpy().tolist():
             splitslist.append(row)
-    return splitslist
-spllist = getlist(splitLemons)
-splits = pd.DataFrame(spllist, columns= ["Lemon", "Infected", "Infection", "PartoSpeech"])
+    return pd.DataFrame(splitslist, columns= ["Lemon", "Infected", "Infection", "PartoSpeech"])
+splits = getList(splitLemons)
 print(splits)
 splits.to_csv(path_or_buf= 'Latin_stuff\lat.trn',sep= "\t", encoding= "utf8", index= False, header=False, columns= ["Lemon", "Infected", "Infection"])
 
 
 # this is super ineffient but whatever
-def removedups(listoLemons:pd.DataFrame, uniqueL:pd.DataFrame) -> pd.DataFrame:
+def removeDups(listoLemons:pd.DataFrame, uniqueL:pd.DataFrame) -> pd.DataFrame:
     return uniqueL[~uniqueL['Lemon'].isin(listoLemons)]
 Lnum = int(uLemonlen / 50)
 # code for lat.tst
-tstUL = removedups(splitLemons, uniqueLemmas)
+tstUL = removeDups(splitLemons, uniqueLemmas)
 tstvLemon = tstUL[tstUL['PartoSpeech'] == 'V'].sample(Lnum)
 tstvpLemon = tstUL[tstUL['PartoSpeech'] == 'V.PTCP'].sample(Lnum)
 tstadjLemon = tstUL[tstUL['PartoSpeech'] == 'ADJ'].sample(Lnum)
@@ -59,13 +58,12 @@ tstnLemon = tstUL[tstUL['PartoSpeech'] == 'N'].sample(Lnum)
 tstpLemon = tstUL[tstUL['PartoSpeech'] == 'PROPN'].sample(Lnum)
 
 tstLemons = pd.concat([tstvLemon,tstvpLemon,tstadjLemon,tstnLemon,tstpLemon])
-tstlist = getlist(tstLemons)
-tst = pd.DataFrame(tstlist, columns= ["Lemon", "Infected", "Infection", "PartoSpeech"])
+tst = getList(tstLemons)
 print(tst)
 tst.to_csv(path_or_buf= 'Latin_stuff\lat.tst',sep= "\t", encoding= "utf8", index= False, header=False, columns= ["Lemon", "Infected", "Infection"])
 
 #Code for lat.dev
-devUL = removedups(splitLemons, tstUL)
+devUL = removeDups(splitLemons, tstUL)
 
 devvLemon = devUL[devUL['PartoSpeech'] == 'V'].sample(Lnum)
 devvpLemon = devUL[devUL['PartoSpeech'] == 'V.PTCP'].sample(Lnum)
@@ -74,7 +72,6 @@ devnLemon = devUL[devUL['PartoSpeech'] == 'N'].sample(Lnum)
 devnpLemon = devUL[devUL['PartoSpeech'] == 'PROPN'].sample(Lnum)
 
 devLemons = pd.concat([devvLemon,devvpLemon,devadjLemon,devnLemon,devnpLemon])
-devlist = getlist(devLemons)
-dev = pd.DataFrame(devlist, columns= ["Lemon", "Infected", "Infection", "PartoSpeech"])
+dev = getList(devLemons)
 print(dev)
 dev.to_csv(path_or_buf= 'Latin_stuff\lat.dev',sep= "\t", encoding= "utf8", index= False, header=False, columns= ["Lemon", "Infected", "Infection"])
