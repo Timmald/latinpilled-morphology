@@ -8,3 +8,4 @@ def swap_cols(path_to_tsv):
         writer.close()
 
 swap_cols("Latin_stuff/lat.trn")
+swap_cols("Latin_stuff/lat.dev")
