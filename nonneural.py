@@ -14,7 +14,7 @@ from glob import glob
 import pickle
 import tqdm
 
-allWordsReader = open("Latin_stuff/lat.dev","r").readlines()
+allWordsReader = open("Latin_stuff/lat.dev","r",encoding="utf8").readlines()
 
 def hamming(s,t):
     return sum(1 for x,y in zip(s,t) if x != y)

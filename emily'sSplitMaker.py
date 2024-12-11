@@ -3,7 +3,7 @@ import pandas as pd
 
 # Put it into a dataframe
 lines = []
-with open('Latin_stuff/lat', encoding="utf8") as f:
+with open('Latin_stuff/lat.txt', encoding="utf8") as f:
     lines = [line for line in f]
 lat = pd.read_table("Latin_stuff/lat.txt", sep='\t', names=['Lemon', 'Infected', 'Infection'], skiprows=lambda x: '+' in lines[x])
 # I replaced all spaces with hyphens because those entries were messing with read_table
@@ -39,6 +39,7 @@ def getList(lemons):
     for lemon in lemons['Lemon']:
         for row in lat[lat['Lemon'] == lemon].to_numpy().tolist():
             splitslist.append(row)
+            print(lemon)
     return pd.DataFrame(splitslist, columns= ["Lemon", "Infected", "Infection", "PartoSpeech"])
 splits = getList(splitLemons)
 print(splits)
@@ -75,3 +76,4 @@ devLemons = pd.concat([devvLemon,devvpLemon,devadjLemon,devnLemon,devnpLemon])
 dev = getList(devLemons)
 print(dev)
 dev.to_csv(path_or_buf= 'Latin_stuff\lat.dev',sep= "\t", encoding= "utf8", index= False, header=False, columns= ["Lemon", "Infected", "Infection"])
+print("hello")
