@@ -1,18 +1,19 @@
 from sklearn.model_selection import train_test_split
 import pandas as pd
 
-# Put Latin data into a dataframe with columns Lemma inflected, inflection, making sure to skip lines with +'s in the inflection
+# Put Latin data into a dataframe with columns Lemma inflected, inflection, making sure to skip lines with +'s or spaces in them
 lines = []
-with open('Latin_stuff/lat') as f:
+with open('Latin_stuff/lat_in.trn') as f:
     lines = [line.rstrip('\n') for line in f]
     
-lat = pd.read_table("Latin_stuff/lat", sep='\t', names=['Lemon', 'Infected', 'Infection'], skiprows=lambda x: '+' in lines[x])
-
+lat = pd.read_table("Latin_stuff/lat_in.trn", sep='\t', names=['Lemon', 'Infected', 'Infection'], skiprows=lambda x: '+' in lines[x])
+print(lat.shape)
 # Label every row with the part of speech extracted from the inflection: N, PROPN, V, V.PTCP, ADJ
 lat['PartoSpeech'] = lat['Infection'].str.extract(r'(N|PROPN|V|V.PTCP|ADJ);')
 
-# get a list of the unique lemmas and a list of the number of parts of speech
-uniqueLemmas = lat.drop_duplicates(subset = ['Lemon'])
+# # get a list of the unique lemmas and a list of the number of parts of speech
+infinitives = lat[lat['Infection'] == 'V;NFIN;ACT;PRS']
+uniqueLemmas = lat.drop_duplicates(subset = ['Lemon', 'PartoSpeech'])
 
 # Split the unique lemmas into dataframes by part of speech while also cutting it down using numbers I calculated elsewhere
 partSample = uniqueLemmas[uniqueLemmas['PartoSpeech'] == 'V.PTCP'].sample(n=112)
